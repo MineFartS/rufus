@@ -174,55 +174,68 @@ static void SetAllowedFileSystems(void)
 	int i;
 
 	memset(allowed_filesystem, 0, sizeof(allowed_filesystem));
+
 	// Nothing is allowed if we don't have a drive
 	if (ComboBox_GetCurSel(hDeviceList) < 0)
 		return;
+
 	switch (selection_default) {
-	case BT_NON_BOOTABLE:
-		for (i = 0; i < FS_MAX; i++)
-			allowed_filesystem[i] = TRUE;
-		break;
-	case BT_MSDOS:
-	case BT_FREEDOS:
-		allowed_filesystem[FS_FAT16] = TRUE;
-		allowed_filesystem[FS_FAT32] = TRUE;
-		break;
-	case BT_IMAGE:
-		if ((image_path == NULL) || !HAS_NTFSLESS_GRUB(img_report))
+
+		case BT_NON_BOOTABLE:
+			for (i = 0; i < FS_MAX; i++)
+				allowed_filesystem[i] = TRUE;
+			break;
+
+		case BT_MSDOS:
+		case BT_FREEDOS:
+			allowed_filesystem[FS_FAT16] = TRUE;
+			allowed_filesystem[FS_FAT32] = TRUE;
+			break;
+
+		case WIN11:
 			allowed_filesystem[FS_NTFS] = TRUE;
-		// Don't allow anything besides NTFS if the image is not compatible
-		if ((image_path != NULL) && !IS_FAT32_COMPAT(img_report)) {
-			// Only disable FAT32 if we have NTFS enabled
-			if (allowed_filesystem[FS_NTFS])
-				break;
-			// Else, print a warning
-			uprintf("WARNING: FAT32 has been forcefully enabled, but this image may not work with FAT32.");
-		}
-		if (!HAS_WINDOWS(img_report) || (target_type != TT_BIOS) || allow_dual_uefi_bios) {
-			if (!HAS_WINTOGO(img_report) || (ComboBox_GetCurItemData(hImageOption) != IMOP_WIN_TO_GO)) {
-				allowed_filesystem[FS_FAT16] = TRUE;
-				allowed_filesystem[FS_FAT32] = TRUE;
+			break;
+
+		case BT_IMAGE:
+			if ((image_path == NULL) || !HAS_NTFSLESS_GRUB(img_report))
+				allowed_filesystem[FS_NTFS] = TRUE;
+			// Don't allow anything besides NTFS if the image is not compatible
+			if ((image_path != NULL) && !IS_FAT32_COMPAT(img_report)) {
+				// Only disable FAT32 if we have NTFS enabled
+				if (allowed_filesystem[FS_NTFS])
+					break;
+				// Else, print a warning
+				uprintf("WARNING: FAT32 has been forcefully enabled, but this image may not work with FAT32.");
 			}
-		}
-		break;
-	case BT_GRUB2:
-		allowed_filesystem[FS_EXT2] = TRUE;
-		allowed_filesystem[FS_EXT3] = TRUE;
-		allowed_filesystem[FS_EXT4] = TRUE;
-		// Fall through
-	case BT_SYSLINUX_V6:
-	case BT_GRUB4DOS:
-		allowed_filesystem[FS_NTFS] = TRUE;
-		// Fall through
-	case BT_SYSLINUX_V4:
-	case BT_REACTOS:
-		allowed_filesystem[FS_FAT16] = TRUE;
-		allowed_filesystem[FS_FAT32] = TRUE;
-		break;
-	case BT_UEFI_NTFS:
-		allowed_filesystem[FS_NTFS] = TRUE;
-		allowed_filesystem[FS_EXFAT] = TRUE;
-		break;
+			if (!HAS_WINDOWS(img_report) || (target_type != TT_BIOS) || allow_dual_uefi_bios) {
+				if (!HAS_WINTOGO(img_report) || (ComboBox_GetCurItemData(hImageOption) != IMOP_WIN_TO_GO)) {
+					allowed_filesystem[FS_FAT16] = TRUE;
+					allowed_filesystem[FS_FAT32] = TRUE;
+				}
+			}
+			break;
+
+		case BT_GRUB2:
+			allowed_filesystem[FS_EXT2] = TRUE;
+			allowed_filesystem[FS_EXT3] = TRUE;
+			allowed_filesystem[FS_EXT4] = TRUE;
+			// Fall through
+
+		case BT_SYSLINUX_V6:
+		case BT_GRUB4DOS:
+			allowed_filesystem[FS_NTFS] = TRUE;
+			// Fall through
+
+		case BT_SYSLINUX_V4:
+		case BT_REACTOS:
+			allowed_filesystem[FS_FAT16] = TRUE;
+			allowed_filesystem[FS_FAT32] = TRUE;
+			break;
+
+		case BT_UEFI_NTFS:
+			allowed_filesystem[FS_NTFS] = TRUE;
+			allowed_filesystem[FS_EXFAT] = TRUE;
+			break;
 	}
 }
 
@@ -232,14 +245,21 @@ static void SetBootOptions(void)
 	char tmp[32];
 
 	IGNORE_RETVAL(ComboBox_ResetContent(hBootType));
+
 	IGNORE_RETVAL(ComboBox_SetItemData(hBootType, ComboBox_AddStringU(hBootType, lmprintf(MSG_279)), BT_NON_BOOTABLE));
+
 	IGNORE_RETVAL(ComboBox_SetItemData(hBootType, ComboBox_AddStringU(hBootType,
 		(image_path == NULL) ? lmprintf(MSG_281, lmprintf(MSG_280)) : short_image_path), BT_IMAGE));
 	image_index = 1;
-	IGNORE_RETVAL(ComboBox_SetItemData(hBootType, ComboBox_AddStringU(hBootType, "MS-DOS"), BT_MSDOS));
-	IGNORE_RETVAL(ComboBox_SetItemData(hBootType, ComboBox_AddStringU(hBootType, "FreeDOS"), BT_FREEDOS));
+
+	IGNORE_RETVAL(ComboBox_SetItemData(hBootType, ComboBox_AddStringU(hBootType, "Windows 11"), WIN11));
 
 	if (advanced_mode_device) {
+
+		IGNORE_RETVAL(ComboBox_SetItemData(hBootType, ComboBox_AddStringU(hBootType, "MS-DOS"), BT_MSDOS));
+
+		IGNORE_RETVAL(ComboBox_SetItemData(hBootType, ComboBox_AddStringU(hBootType, "FreeDOS"), BT_FREEDOS));
+
 		static_sprintf(tmp, "Syslinux %s", embedded_sl_version_str[0]);
 		IGNORE_RETVAL(ComboBox_SetItemData(hBootType, ComboBox_AddStringU(hBootType, tmp), BT_SYSLINUX_V4));
 		static_sprintf(tmp, "Syslinux %s", embedded_sl_version_str[1]);

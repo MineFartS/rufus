@@ -313,6 +313,7 @@ enum fs_type {
 enum boot_type {
 	BT_NON_BOOTABLE = 0,
 	BT_MSDOS,
+	WIN11,
 	BT_FREEDOS,
 	BT_IMAGE,
 	BT_SYSLINUX_V4,		// Start of indexes that only display in advanced mode
