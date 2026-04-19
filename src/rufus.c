@@ -250,9 +250,12 @@ static void SetBootOptions(void)
 		IGNORE_RETVAL(ComboBox_SetItemData(hBootType, ComboBox_AddStringU(hBootType,
 			"Grub4DOS " GRUB4DOS_VERSION), BT_GRUB4DOS));
 		IGNORE_RETVAL(ComboBox_SetItemData(hBootType, ComboBox_AddStringU(hBootType, "UEFI:NTFS"), BT_UEFI_NTFS));
+
 	}
-	if ((!advanced_mode_device) && (selection_default >= BT_SYSLINUX_V4))
+	else if (selection_default >= BT_SYSLINUX_V4) {
 		selection_default = BT_IMAGE;
+	}
+
 	SetComboEntry(hBootType, selection_default);
 }
 
