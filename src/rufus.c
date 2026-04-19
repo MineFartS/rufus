@@ -406,46 +406,6 @@ static BOOL SetClusterSizes(int FSType)
 	return TRUE;
 }
 
-static BOOL IsRefsAvailable(MEDIA_TYPE MediaType)
-{
-	// The creation of ReFS drives was added in Windows 8.1... but then removed by
-	// Microsoft in Windows 10 1709, except for the Enterprise and Pro Workstation
-	// versions. Oh and VdsService::QueryFileSystemTypes() is *USELESS* to detect
-	// if ReFS is available on the system. Oh, and it only applies to fixed media.
-	// Oh and Microsoft removed the ability to format a volume to ReFS unless you
-	// use VDS... Why do I even bother with this?
-
-	if (MediaType != FixedMedia)
-		return FALSE;
-	if (WindowsVersion.Version < WINDOWS_8_1 || WindowsVersion.BuildNumber <= 0)
-		return FALSE;
-	if (!use_vds)
-		return FALSE;
-	// Per https://gist.github.com/0xbadfca11/da0598e47dd643d933dc
-	if (WindowsVersion.BuildNumber < 16226)
-		return TRUE;
-	switch (WindowsVersion.Edition) {
-	case 0x0000000A: // Enterprise Server
-	case 0x0000001B: // Enterprise N
-	case 0x00000046: // Enterprise E
-	case 0x00000048: // Enterprise Eval
-	case 0x00000054: // Enterprise N Eval
-	case 0x0000007D: // Enterprise S
-	case 0x0000007E: // Enterprise S N
-	case 0x00000081: // Enterprise S Eval
-	case 0x00000082: // Enterprise S N Eval
-	case 0x0000008C: // Enterprise Subscription
-	case 0x0000008D: // Enterprise Subscription N
-	case 0x000000A1: // Pro Workstation
-	case 0x000000A2: // Pro Workstation N
-	case 0x000000AB: // Enterprise G
-	case 0x000000AC: // Enterprise G N
-		return TRUE;
-	default:
-		return FALSE;
-	}
-}
-
 // Populate the File System and Cluster Size dropdowns
 static BOOL SetFileSystemAndClusterSize(char* fs_name)
 {
@@ -565,16 +525,6 @@ static BOOL SetFileSystemAndClusterSize(char* fs_name)
 			SelectedDrive.ClusterSize[FS_EXT3].Default = 1;
 		}
 
-		// ReFS (only applicable for a select number of Windows platforms and editions)
-		if ((SelectedDrive.DiskSize >= 512 * MB) && (IsRefsAvailable(SelectedDrive.MediaType))) {
-			if (SelectedDrive.DiskSize < 16 * TB) {	// < 16 TB
-				SelectedDrive.ClusterSize[FS_REFS].Allowed = 64 * KB + 4 * KB;
-				SelectedDrive.ClusterSize[FS_REFS].Default = 4 * KB;
-			} else {
-				SelectedDrive.ClusterSize[FS_REFS].Allowed = 64 * KB;
-				SelectedDrive.ClusterSize[FS_REFS].Default = 64 * KB;
-			}
-		}
 	}
 
 	// Only add the filesystems we can service
